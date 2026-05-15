@@ -177,6 +177,15 @@ def draw_building(mx:int, my:int, cell:int, cam:float3, right:float3, up:float3,
     draw_quad3(b0, c0, c1, b1, cam, right, up, forward, screen_w, screen_h, focal, base * 0.50)
     draw_quad3(c0, d0, d1, c1, cam, right, up, forward, screen_w, screen_h, focal, base * 0.44)
     draw_quad3(d0, a0, a1, d1, cam, right, up, forward, screen_w, screen_h, focal, base * 0.56)
+    for(5) floor:
+        let t = float(floor + 1) / 6.0
+        let ab0 = a0 + (a1 - a0) * t
+        let bb0 = b0 + (b1 - b0) * t
+        let cb0 = c0 + (c1 - c0) * t
+        let db0 = d0 + (d1 - d0) * t
+        draw_line3(ab0, bb0, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.85, 0.95, 1.0, 0.34 }, 1.0)
+        draw_line3(bb0, cb0, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.85, 0.95, 1.0, 0.28 }, 1.0)
+        draw_line3(cb0, db0, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.85, 0.95, 1.0, 0.22 }, 1.0)
     draw_line3(a1, b1, cam, right, up, forward, screen_w, screen_h, focal, float4 { 1.0, 1.0, 1.0, 0.55 }, 1.0)
     draw_line3(b1, c1, cam, right, up, forward, screen_w, screen_h, focal, float4 { 1.0, 1.0, 1.0, 0.55 }, 1.0)
     draw_line3(c1, d1, cam, right, up, forward, screen_w, screen_h, focal, float4 { 1.0, 1.0, 1.0, 0.55 }, 1.0)
@@ -191,6 +200,12 @@ def draw_surface_parcel(mx:int, my:int, occupied:int, cam:float3, right:float3, 
     let d = sphere_cell_point(float(mx) + inset, float(my + 1) - inset, r)
     if occupied == 0:
         draw_quad3(a, b, c, d, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.075, 0.095, 0.105, 1.0 })
+        let mid_ab = (a + b) * 0.5
+        let mid_cd = (c + d) * 0.5
+        let mid_bc = (b + c) * 0.5
+        let mid_da = (d + a) * 0.5
+        draw_line3(mid_ab, mid_cd, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.95, 0.88, 0.45, 0.22 }, 1.0)
+        draw_line3(mid_bc, mid_da, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.95, 0.88, 0.45, 0.16 }, 1.0)
     else:
         draw_quad3(a, b, c, d, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.045, 0.055, 0.06, 1.0 })
 
