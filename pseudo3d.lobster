@@ -1,235 +1,271 @@
-// pseudo3d.lobster - A pseudo-3D raycasting game MVP
-// DDA Raycaster inspired by Wolfenstein 3D / Doom-era games
-// Controls: WASD move, Mouse look, ESC to quit
+// pseudo3d.lobster - inside-sphere traversal prototype
+// A software-projected 3D view of a player walking on the inner surface of a sphere.
 
-// ===== WORLD MAP =====
-// 0 = empty, 1-5 = wall types with different colors
+let sphere_r = 72.0
+let player_height = 2.0
+let player_radius = 0.42
+let camera_back = 7.0
+let camera_up = 2.7
+
 let worldmap = [
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,2,2,2,0,0,0,0,3,0,3,0,0,1],
-    [1,0,0,2,0,0,0,0,0,0,3,0,3,0,0,1],
-    [1,0,0,2,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,4,4,4,4,0,0,0,0,1],
-    [1,0,0,0,0,0,0,4,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,5,0,5,0,5,0,0,0,1],
-    [1,0,0,0,0,0,0,5,0,0,0,5,0,0,0,1],
-    [1,0,0,0,0,0,0,5,5,0,5,5,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,2,2,2,0,0,0,0,3,0,3,0,0,0],
+    [0,0,0,2,0,0,0,0,0,0,3,0,3,0,0,0],
+    [0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,4,4,4,4,0,0,0,0,0],
+    [0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,5,0,5,0,5,0,0,0,0],
+    [0,0,0,0,0,0,0,5,0,0,0,5,0,0,0,0],
+    [0,0,0,0,0,0,0,5,5,0,5,5,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 ]
 
 let map_w = 16
 let map_h = 16
 
-// ===== WALL COLOR FUNCTION =====
 def wall_color(n:int) -> float4:
     return switch n:
-        case 1: float4 { 0.8, 0.2, 0.2, 1.0 }   // Red
-        case 2: float4 { 0.2, 0.8, 0.2, 1.0 }   // Green
-        case 3: float4 { 0.2, 0.3, 0.8, 1.0 }   // Blue
-        case 4: float4 { 0.8, 0.8, 0.2, 1.0 }   // Yellow
-        case 5: float4 { 0.8, 0.2, 0.8, 1.0 }   // Magenta
-        default: float4 { 0.5, 0.5, 0.5, 1.0 }  // Gray
+        case 2: float4 { 0.2, 0.8, 0.35, 1.0 }
+        case 3: float4 { 0.25, 0.35, 0.9, 1.0 }
+        case 4: float4 { 0.95, 0.85, 0.2, 1.0 }
+        case 5: float4 { 0.9, 0.25, 0.8, 1.0 }
+        default: float4 { 0.8, 0.18, 0.18, 1.0 }
 
-// ===== PLAYER STATE =====
-// Starting position: center of an empty cell (avoids boundary issues)
-var pos = float2 { 8.0, 7.0 }
-var dir = float2 { 1.0, 0.0 }
-var plane = float2 { 0.0, 0.66 }  // FOV ~= 2 * atan(0.66) = 66 degrees
+def building_height(n:int) -> float:
+    return switch n:
+        case 2: 7.0
+        case 3: 14.0
+        case 4: 22.0
+        case 5: 10.0
+        default: 9.0
 
-// ===== GAME SETTINGS =====
-let render_width = 320      // Number of ray columns (lower = retro feel)
-let move_speed = 4.0        // Units per second
-let mouse_sens = 0.2        // Degrees per pixel of mouse movement
+def wrap_degrees(a:float) -> float:
+    var r = a
+    while r < 0.0: r += 360.0
+    while r >= 360.0: r -= 360.0
+    return r
 
-// ===== WINDOW SETUP =====
-gl.window("Pseudo 3D Raycaster MVP", 960, 600)
+def sphere_point(lon:float, lat:float, radius:float) -> float3:
+    let clat = cos(lat)
+    return float3 { radius * clat * cos(lon), radius * sin(lat), radius * clat * sin(lon) }
+
+def sphere_cell_point(mx:float, my:float, radius:float) -> float3:
+    let lon = mx / float(map_w) * 360.0
+    let lat = 82.0 - my / float(map_h) * 164.0
+    return sphere_point(lon, lat, radius)
+
+def draw_line3(a:float3, b:float3, cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float, col:float4, thickness:float):
+    let ar = a - cam
+    let br = b - cam
+    let az = dot(ar, forward)
+    let bz = dot(br, forward)
+    if az > 0.05 and bz > 0.05:
+        let ax = screen_w * 0.5 + dot(ar, right) / az * focal
+        let ay = screen_h * 0.5 - dot(ar, up) / az * focal
+        let bx = screen_w * 0.5 + dot(br, right) / bz * focal
+        let by = screen_h * 0.5 - dot(br, up) / bz * focal
+        gl.color(col)
+        gl.line(float2 { ax, ay }, float2 { bx, by }, thickness)
+
+def draw_screen_circle3(p:float3, world_radius:float, cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float, col:float4, segments:int):
+    let pr = p - cam
+    let pz = dot(pr, forward)
+    if pz > 0.05:
+        let px = screen_w * 0.5 + dot(pr, right) / pz * focal
+        let py = screen_h * 0.5 - dot(pr, up) / pz * focal
+        let sr = max(world_radius / pz * focal, 2.0)
+        gl.push_model_view()
+        gl.translate(float2 { px, py })
+        gl.color(col)
+        gl.circle(sr, segments)
+        gl.pop_model_view()
+
+def screen_point(p:float3, cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float) -> float3:
+    let pr = p - cam
+    let pz = dot(pr, forward)
+    return float3 {
+        screen_w * 0.5 + dot(pr, right) / pz * focal,
+        screen_h * 0.5 - dot(pr, up) / pz * focal,
+        pz
+    }
+
+def draw_screen_capsule(bottom:float2, top:float2, radius:float, col:float4):
+    let axis = top - bottom
+    let len = max(magnitude(axis), 0.01)
+    let unit = axis / len
+    let side = float2 { -unit.y, unit.x }
+    let half = side * radius
+    gl.color(col)
+    gl.polygon([bottom + half, top + half, top - half, bottom - half])
+    gl.push_model_view()
+    gl.translate(bottom)
+    gl.circle(radius, 24)
+    gl.pop_model_view()
+    gl.push_model_view()
+    gl.translate(top)
+    gl.circle(radius, 24)
+    gl.pop_model_view()
+
+def draw_quad3(a:float3, b:float3, c:float3, d:float3, cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float, col:float4):
+    let ar = a - cam
+    let br = b - cam
+    let cr = c - cam
+    let dr = d - cam
+    let az = dot(ar, forward)
+    let bz = dot(br, forward)
+    let cz = dot(cr, forward)
+    let dz = dot(dr, forward)
+    if az > 0.05 and bz > 0.05 and cz > 0.05 and dz > 0.05:
+        let ax = screen_w * 0.5 + dot(ar, right) / az * focal
+        let ay = screen_h * 0.5 - dot(ar, up) / az * focal
+        let bx = screen_w * 0.5 + dot(br, right) / bz * focal
+        let by = screen_h * 0.5 - dot(br, up) / bz * focal
+        let cx = screen_w * 0.5 + dot(cr, right) / cz * focal
+        let cy = screen_h * 0.5 - dot(cr, up) / cz * focal
+        let dx = screen_w * 0.5 + dot(dr, right) / dz * focal
+        let dy = screen_h * 0.5 - dot(dr, up) / dz * focal
+        gl.color(col)
+        gl.polygon([float2 { ax, ay }, float2 { bx, by }, float2 { cx, cy }, float2 { dx, dy }])
+
+def draw_building(mx:int, my:int, cell:int, cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float):
+    let inset = 0.16
+    let x0 = float(mx) + inset
+    let x1 = float(mx + 1) - inset
+    let y0 = float(my) + inset
+    let y1 = float(my + 1) - inset
+    let outer_r = sphere_r - 0.08
+    let inner_r = sphere_r - building_height(cell)
+    let a0 = sphere_cell_point(x0, y0, outer_r)
+    let b0 = sphere_cell_point(x1, y0, outer_r)
+    let c0 = sphere_cell_point(x1, y1, outer_r)
+    let d0 = sphere_cell_point(x0, y1, outer_r)
+    let a1 = sphere_cell_point(x0, y0, inner_r)
+    let b1 = sphere_cell_point(x1, y0, inner_r)
+    let c1 = sphere_cell_point(x1, y1, inner_r)
+    let d1 = sphere_cell_point(x0, y1, inner_r)
+    let base = wall_color(cell)
+    draw_quad3(a1, b1, c1, d1, cam, right, up, forward, screen_w, screen_h, focal, base)
+    draw_quad3(a0, b0, b1, a1, cam, right, up, forward, screen_w, screen_h, focal, base * 0.62)
+    draw_quad3(b0, c0, c1, b1, cam, right, up, forward, screen_w, screen_h, focal, base * 0.50)
+    draw_quad3(c0, d0, d1, c1, cam, right, up, forward, screen_w, screen_h, focal, base * 0.44)
+    draw_quad3(d0, a0, a1, d1, cam, right, up, forward, screen_w, screen_h, focal, base * 0.56)
+    draw_line3(a1, b1, cam, right, up, forward, screen_w, screen_h, focal, float4 { 1.0, 1.0, 1.0, 0.55 }, 1.0)
+    draw_line3(b1, c1, cam, right, up, forward, screen_w, screen_h, focal, float4 { 1.0, 1.0, 1.0, 0.55 }, 1.0)
+    draw_line3(c1, d1, cam, right, up, forward, screen_w, screen_h, focal, float4 { 1.0, 1.0, 1.0, 0.55 }, 1.0)
+    draw_line3(d1, a1, cam, right, up, forward, screen_w, screen_h, focal, float4 { 1.0, 1.0, 1.0, 0.55 }, 1.0)
+
+def draw_player_capsule(feet:float3, inward_up:float3, flat_forward:float3, cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float):
+    let bottom3 = feet + inward_up * player_radius
+    let top3 = feet + inward_up * (player_height - player_radius)
+    let mid3 = feet + inward_up * (player_height * 0.5)
+    let b = screen_point(bottom3, cam, right, up, forward, screen_w, screen_h, focal)
+    let t = screen_point(top3, cam, right, up, forward, screen_w, screen_h, focal)
+    let m = screen_point(mid3, cam, right, up, forward, screen_w, screen_h, focal)
+    if b.z > 0.05 and t.z > 0.05 and m.z > 0.05:
+        let sr = max(player_radius / m.z * focal, 6.0)
+        let bottom = float2 { b.x, b.y }
+        let top = float2 { t.x, t.y }
+        draw_screen_capsule(bottom, top, sr, float4 { 0.16, 0.72, 1.0, 0.96 })
+        draw_screen_capsule(bottom + float2 { sr * 0.18, -sr * 0.08 }, top + float2 { sr * 0.18, -sr * 0.08 }, sr * 0.58, float4 { 0.55, 0.92, 1.0, 0.38 })
+        draw_line3(mid3, mid3 + flat_forward * 1.2, cam, right, up, forward, screen_w, screen_h, focal, float4 { 1.0, 0.95, 0.25, 1.0 }, 3.0)
+    draw_screen_circle3(feet, player_radius * 1.45, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.1, 0.95, 0.6, 0.28 }, 24)
+
+var lon = 0.0
+var lat = -8.0
+var yaw = 92.0
+var pitch = -8.0
+var fov = 68.0
+
+gl.window("A Raycasted Lobster - True Sphere Interior", 960, 600)
+gl.set_font_name("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
 gl.cursor(false)
 
-// ===== MAIN GAME LOOP =====
 while gl.frame() and gl.button("escape") != 1:
     let screen_w = float(gl.window_size().x)
     let screen_h = float(gl.window_size().y)
     let dt = gl.delta_time()
+    let mouse = gl.mouse_delta(0)
 
-    // ---- INPUT ----
-    // Mouse look (rotation)
-    let mouse_rot = float(gl.mouse_delta(0).x) * mouse_sens
-    if mouse_rot != 0.0:
-        // 2D rotation: apply rotation matrix to dir and plane vectors
-        let cos_r = cos(mouse_rot)
-        let sin_r = sin(mouse_rot)
-        let old_dir_x = dir.x
-        dir.x = dir.x * cos_r - dir.y * sin_r
-        dir.y = old_dir_x * sin_r + dir.y * cos_r
-        let old_plane_x = plane.x
-        plane.x = plane.x * cos_r - plane.y * sin_r
-        plane.y = old_plane_x * sin_r + plane.y * cos_r
+    yaw = wrap_degrees(yaw + float(mouse.x) * 0.16)
+    pitch = clamp(pitch - float(mouse.y) * 0.16, -78.0, 78.0)
+    if gl.button("q") >= 1: fov = max(fov - dt * 36.0, 35.0)
+    if gl.button("e") >= 1: fov = min(fov + dt * 36.0, 115.0)
 
-    // Forward / backward (W/S or Up/Down arrows)
-    if gl.button("w") >= 1 or gl.button("up") >= 1:
-        let new_x = pos.x + dir.x * dt * move_speed
-        let new_y = pos.y + dir.y * dt * move_speed
-        if worldmap[int(pos.y)][int(new_x)] == 0: pos.x = new_x
-        if worldmap[int(new_y)][int(pos.x)] == 0: pos.y = new_y
-    if gl.button("s") >= 1 or gl.button("down") >= 1:
-        let new_x = pos.x - dir.x * dt * move_speed
-        let new_y = pos.y - dir.y * dt * move_speed
-        if worldmap[int(pos.y)][int(new_x)] == 0: pos.x = new_x
-        if worldmap[int(new_y)][int(pos.x)] == 0: pos.y = new_y
+    let angular_speed = 4.0 * dt
+    var move_f = 0.0
+    var move_r = 0.0
+    if gl.button("w") >= 1 or gl.button("up") >= 1: move_f += angular_speed
+    if gl.button("s") >= 1 or gl.button("down") >= 1: move_f -= angular_speed
+    if gl.button("d") >= 1: move_r += angular_speed
+    if gl.button("a") >= 1: move_r -= angular_speed
 
-    // Strafe left / right (A/D)
-    if gl.button("a") >= 1:
-        let new_x = pos.x - plane.x * dt * move_speed
-        let new_y = pos.y - plane.y * dt * move_speed
-        if worldmap[int(pos.y)][int(new_x)] == 0: pos.x = new_x
-        if worldmap[int(new_y)][int(pos.x)] == 0: pos.y = new_y
-    if gl.button("d") >= 1:
-        let new_x = pos.x + plane.x * dt * move_speed
-        let new_y = pos.y + plane.y * dt * move_speed
-        if worldmap[int(pos.y)][int(new_x)] == 0: pos.x = new_x
-        if worldmap[int(new_y)][int(pos.x)] == 0: pos.y = new_y
+    let lat_scale = max(cos(lat), 0.18)
+    lat = clamp(lat + cos(yaw) * move_f + cos(yaw + 90.0) * move_r, -80.0, 80.0)
+    lon = wrap_degrees(lon + (sin(yaw) * move_f + sin(yaw + 90.0) * move_r) / lat_scale)
 
-    // ---- RENDERING ----
-    // Ceiling (sky color)
-    gl.clear(float4 { 0.3, 0.3, 0.6, 1.0 })
+    let feet = sphere_point(lon, lat, sphere_r - 0.12)
+    let outward = normalize(sphere_point(lon, lat, 1.0))
+    let up0 = float3 { -outward.x, -outward.y, -outward.z }
+    let east = normalize(float3 { -sin(lon), 0.0, cos(lon) })
+    let north = normalize(float3 { -sin(lat) * cos(lon), cos(lat), -sin(lat) * sin(lon) })
+    let flat_forward = normalize(north * cos(yaw) + east * sin(yaw))
+    let cam = feet - flat_forward * camera_back + up0 * camera_up
+    let right = normalize(cross(flat_forward, up0))
+    let target = feet + up0 * (player_height * 1.1) + flat_forward * 8.0 + up0 * sin(pitch) * 3.0
+    let forward = normalize(target - cam)
+    let view_up = normalize(cross(right, forward))
+    let focal = screen_h * 0.5 / tan(fov * 0.5)
 
-    // Floor (simple solid color, drawn below the horizon)
-    gl.push_model_view()
-    gl.translate(float2 { 0.0, screen_h * 0.5 })
-    gl.color(float4 { 0.15, 0.15, 0.15, 1.0 })
-    gl.rect(float2 { screen_w, screen_h * 0.5 })
-    gl.pop_model_view()
+    gl.clear(float4 { 0.025, 0.03, 0.045, 1.0 })
 
-    // ---- RAYCASTING (DDA Algorithm) ----
-    let strip_w = screen_w / render_width
+    // Interior sphere latitude rings.
+    for(13) yi:
+        let gy = float(yi + 1)
+        var prev = sphere_cell_point(0.0, gy, sphere_r)
+        for(64) xi:
+            let p = sphere_cell_point(float(xi + 1) / 64.0 * float(map_w), gy, sphere_r)
+            draw_line3(prev, p, cam, right, view_up, forward, screen_w, screen_h, focal, float4 { 0.18, 0.42, 0.52, 0.42 }, 1.0)
+            prev = p
 
-    for(render_width) x:
-        // Camera space X: -1 (left) to 1 (right)
-        let camera_x = 2.0 * float(x) / render_width - 1.0
-        let ray_x = dir.x + plane.x * camera_x
-        let ray_y = dir.y + plane.y * camera_x
+    // Interior sphere longitude arcs.
+    for(16) xi:
+        let gx = float(xi)
+        var prev = sphere_cell_point(gx, 0.0, sphere_r)
+        for(40) yi:
+            let p = sphere_cell_point(gx, float(yi + 1) / 40.0 * float(map_h), sphere_r)
+            draw_line3(prev, p, cam, right, view_up, forward, screen_w, screen_h, focal, float4 { 0.16, 0.32, 0.44, 0.36 }, 1.0)
+            prev = p
 
-        // Current map cell
-        var map_x = int(pos.x)
-        var map_y = int(pos.y)
-
-        // Distance ray travels between grid lines (avoid /0)
-        var delta_x = 999999.0
-        var delta_y = 999999.0
-        if ray_x != 0.0: delta_x = abs(1.0 / ray_x)
-        if ray_y != 0.0: delta_y = abs(1.0 / ray_y)
-
-        // Step direction and initial side distance
-        var step_x = 0
-        var side_x = 0.0
-        if ray_x < 0.0:
-            step_x = -1
-            side_x = (pos.x - float(map_x)) * delta_x
-        else:
-            step_x = 1
-            side_x = (float(map_x) + 1.0 - pos.x) * delta_x
-
-        var step_y = 0
-        var side_y = 0.0
-        if ray_y < 0.0:
-            step_y = -1
-            side_y = (pos.y - float(map_y)) * delta_y
-        else:
-            step_y = 1
-            side_y = (float(map_y) + 1.0 - pos.y) * delta_y
-
-        // DDA: step through grid until we hit a wall
-        var hit = 0
-        var side = 0  // 0 = x-side, 1 = y-side
-
-        while hit == 0:
-            if side_x < side_y:
-                side_x += delta_x
-                map_x += step_x
-                side = 0
-            else:
-                side_y += delta_y
-                map_y += step_y
-                side = 1
-            // Safety: bounds check (map is walled so this shouldn't fail)
-            if map_x >= 0 and map_x < map_w and map_y >= 0 and map_y < map_h:
-                hit = worldmap[map_y][map_x]
-            else:
-                hit = 1
-
-        // Perpendicular distance (avoids fisheye)
-        var perp = 1.0
-        if side == 0:
-            perp = (float(map_x) - pos.x + (1.0 - float(step_x)) * 0.5) / ray_x
-        else:
-            perp = (float(map_y) - pos.y + (1.0 - float(step_y)) * 0.5) / ray_y
-
-        // Clamp to avoid extreme values
-        if perp < 0.01: perp = 0.01
-
-        // Wall height inversely proportional to distance
-        let line_h = screen_h / perp
-        let draw_start = (screen_h - line_h) * 0.5
-
-        // Wall color with side shading
-        var col = wall_color(hit)
-        if side == 1: col = col * 0.6  // Y-side walls are darker
-
-        // Distance fog
-        let fog = max(1.0 - perp * 0.04, 0.25)
-        col = float4 { col.x * fog, col.y * fog, col.z * fog, 1.0 }
-
-        // Draw the wall strip
-        gl.push_model_view()
-        gl.translate(float2 { float(x) * strip_w, draw_start })
-        gl.color(col)
-        gl.rect(float2 { strip_w + 1.0, line_h })
-        gl.pop_model_view()
-
-    // ---- MINIMAP OVERLAY ----
-    let mm_scale = 8.0
-    let mm_x = 10.0
-    let mm_y = screen_h - mm_scale * map_h - 10.0
-    let mm_w = mm_scale * map_w
-    let mm_h = mm_scale * map_h
-
-    // Enter minimap coordinate space
-    gl.push_model_view()
-    gl.translate(float2 { mm_x, mm_y })
-
-    // Background
-    gl.color(float4 { 0.0, 0.0, 0.0, 0.6 })
-    gl.rect(float2 { mm_w, mm_h })
-
-    // Wall cells on minimap
+    // City blocks: buildings protrude inward from the shell toward the player.
     for(map_w) mx:
         for(map_h) my:
-            if worldmap[my][mx] != 0:
-                gl.push_model_view()
-                gl.translate(float2 { float(mx) * mm_scale, float(my) * mm_scale })
-                gl.color(float4 { 1.0, 1.0, 1.0, 0.6 })
-                gl.rect(float2 { mm_scale, mm_scale })
-                gl.pop_model_view()
+            let cell = worldmap[my][mx]
+            if cell != 0:
+                draw_building(mx, my, cell, cam, right, view_up, forward, screen_w, screen_h, focal)
 
-    // Player dot on minimap
+    draw_player_capsule(feet, up0, flat_forward, cam, right, view_up, forward, screen_w, screen_h, focal)
+
+    // Center reticle and HUD.
+    gl.color(float4 { 0.9, 0.96, 0.9, 0.7 })
+    gl.line(float2 { screen_w * 0.5 - 8.0, screen_h * 0.5 }, float2 { screen_w * 0.5 + 8.0, screen_h * 0.5 }, 1.0)
+    gl.line(float2 { screen_w * 0.5, screen_h * 0.5 - 8.0 }, float2 { screen_w * 0.5, screen_h * 0.5 + 8.0 }, 1.0)
+
+    gl.set_font_size(16)
     gl.push_model_view()
-    gl.translate(float2 { pos.x * mm_scale, pos.y * mm_scale })
-    gl.color(float4 { 0.0, 1.0, 0.0, 1.0 })
-    gl.circle(3.0, 8)
-    gl.pop_model_view()
-
-    // Player direction indicator on minimap
-    gl.push_model_view()
-    gl.translate(float2 { pos.x * mm_scale, pos.y * mm_scale })
-    gl.color(float4 { 1.0, 1.0, 0.0, 0.8 })
-    gl.line(float2 { 0.0, 0.0 }, float2 { dir.x * 12.0, dir.y * 12.0 }, 2.0)
-    gl.pop_model_view()
-
-    // Exit minimap coordinate space
+    gl.translate(float2 { 14.0, 12.0 })
+    gl.color(float4 { 0.0, 0.0, 0.0, 0.68 })
+    gl.rect(float2 { 390.0, 76.0 })
+    gl.color(float4 { 0.92, 0.96, 0.9, 1.0 })
+    gl.translate(float2 { 10.0, 8.0 })
+    gl.text("third-person capsule scale test")
+    gl.translate(float2 { 0.0, 22.0 })
+    gl.text("WASD traverse shell, mouse yaw/pitch")
+    gl.translate(float2 { 0.0, 22.0 })
+    gl.text("Q/E FOV " + string(fov) + "  lat " + string(lat))
     gl.pop_model_view()
