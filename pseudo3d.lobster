@@ -182,6 +182,18 @@ def draw_building(mx:int, my:int, cell:int, cam:float3, right:float3, up:float3,
     draw_line3(c1, d1, cam, right, up, forward, screen_w, screen_h, focal, float4 { 1.0, 1.0, 1.0, 0.55 }, 1.0)
     draw_line3(d1, a1, cam, right, up, forward, screen_w, screen_h, focal, float4 { 1.0, 1.0, 1.0, 0.55 }, 1.0)
 
+def draw_surface_parcel(mx:int, my:int, occupied:int, cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float):
+    let inset = 0.04
+    let r = sphere_r - 0.16
+    let a = sphere_cell_point(float(mx) + inset, float(my) + inset, r)
+    let b = sphere_cell_point(float(mx + 1) - inset, float(my) + inset, r)
+    let c = sphere_cell_point(float(mx + 1) - inset, float(my + 1) - inset, r)
+    let d = sphere_cell_point(float(mx) + inset, float(my + 1) - inset, r)
+    if occupied == 0:
+        draw_quad3(a, b, c, d, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.075, 0.095, 0.105, 1.0 })
+    else:
+        draw_quad3(a, b, c, d, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.045, 0.055, 0.06, 1.0 })
+
 def draw_player_capsule(feet:float3, inward_up:float3, flat_forward:float3, cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float):
     let bottom3 = feet + inward_up * player_radius_m
     let top3 = feet + inward_up * (player_height_m - player_radius_m)
@@ -261,10 +273,11 @@ while gl.frame() and gl.button("escape") != 1:
             draw_line3(prev, p, cam, right, view_up, forward, screen_w, screen_h, focal, float4 { 0.16, 0.32, 0.44, 0.36 }, 1.0)
             prev = p
 
-    // City blocks: buildings protrude inward from the shell toward the player.
+    // Spherical surface parcels and city blocks.
     for(map_w) mx:
         for(map_h) my:
             let cell = worldmap[my][mx]
+            draw_surface_parcel(mx, my, cell, cam, right, view_up, forward, screen_w, screen_h, focal)
             if cell != 0:
                 draw_building(mx, my, cell, cam, right, view_up, forward, screen_w, screen_h, focal)
 
