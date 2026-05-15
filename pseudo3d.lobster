@@ -69,6 +69,19 @@ def sphere_cell_point(mx:float, my:float, radius:float) -> float3:
     let lat = equal_area_lat(my)
     return sphere_point(lon, lat, radius)
 
+def tangent_inward_up(lon:float, lat:float) -> float3:
+    let outward = normalize(sphere_point(lon, lat, 1.0))
+    return float3 { -outward.x, -outward.y, -outward.z }
+
+def tangent_east(lon:float) -> float3:
+    return normalize(float3 { -sin(lon), 0.0, cos(lon) })
+
+def tangent_north(lon:float, lat:float) -> float3:
+    return normalize(float3 { -sin(lat) * cos(lon), cos(lat), -sin(lat) * sin(lon) })
+
+def tangent_forward(lon:float, lat:float, yaw:float) -> float3:
+    return normalize(tangent_north(lon, lat) * cos(yaw) + tangent_east(lon) * sin(yaw))
+
 def draw_line3(a:float3, b:float3, cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float, col:float4, thickness:float):
     let ar = a - cam
     let br = b - cam
@@ -219,11 +232,8 @@ while gl.frame() and gl.button("escape") != 1:
     lon = wrap_degrees(lon + (sin(yaw) * move_f + sin(yaw + 90.0) * move_r) / lat_scale)
 
     let feet = sphere_point(lon, lat, sphere_r - 0.12)
-    let outward = normalize(sphere_point(lon, lat, 1.0))
-    let up0 = float3 { -outward.x, -outward.y, -outward.z }
-    let east = normalize(float3 { -sin(lon), 0.0, cos(lon) })
-    let north = normalize(float3 { -sin(lat) * cos(lon), cos(lat), -sin(lat) * sin(lon) })
-    let flat_forward = normalize(north * cos(yaw) + east * sin(yaw))
+    let up0 = tangent_inward_up(lon, lat)
+    let flat_forward = tangent_forward(lon, lat, yaw)
     let cam = feet - flat_forward * camera_back_m + up0 * camera_up_m
     let right = normalize(cross(flat_forward, up0))
     let target = feet + up0 * player_eye_m + flat_forward * 8.0 + up0 * sin(pitch) * 3.0
