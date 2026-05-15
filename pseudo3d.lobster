@@ -41,6 +41,13 @@ def building_height(n:int) -> float:
         case 5: 18.0
         default: 16.0
 
+def tower_radius(n:int) -> float:
+    return switch n:
+        case 3: 0.32
+        case 4: 0.42
+        case 5: 0.28
+        default: 0.34
+
 def wrap_degrees(a:float) -> float:
     var r = a
     while r < 0.0: r += 360.0
@@ -159,41 +166,52 @@ def draw_quad3(a:float3, b:float3, c:float3, d:float3, cam:float3, right:float3,
         gl.color(col)
         gl.polygon([float2 { ax, ay }, float2 { bx, by }, float2 { cx, cy }, float2 { dx, dy }])
 
+def draw_tri3(a:float3, b:float3, c:float3, cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float, col:float4):
+    let ar = a - cam
+    let br = b - cam
+    let cr = c - cam
+    let az = dot(ar, forward)
+    let bz = dot(br, forward)
+    let cz = dot(cr, forward)
+    if az > 0.05 and bz > 0.05 and cz > 0.05:
+        let ax = screen_w * 0.5 + dot(ar, right) / az * focal
+        let ay = screen_h * 0.5 - dot(ar, up) / az * focal
+        let bx = screen_w * 0.5 + dot(br, right) / bz * focal
+        let by = screen_h * 0.5 - dot(br, up) / bz * focal
+        let cx = screen_w * 0.5 + dot(cr, right) / cz * focal
+        let cy = screen_h * 0.5 - dot(cr, up) / cz * focal
+        gl.color(col)
+        gl.polygon([float2 { ax, ay }, float2 { bx, by }, float2 { cx, cy }])
+
 def draw_building(mx:int, my:int, cell:int, cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float):
-    let inset = 0.16
-    let x0 = float(mx) + inset
-    let x1 = float(mx + 1) - inset
-    let y0 = float(my) + inset
-    let y1 = float(my + 1) - inset
+    let cx = float(mx) + 0.5
+    let cy = float(my) + 0.5
+    let footprint = tower_radius(cell)
     let outer_r = sphere_r - 0.08
     let inner_r = sphere_r - building_height(cell)
-    let a0 = sphere_cell_point(x0, y0, outer_r)
-    let b0 = sphere_cell_point(x1, y0, outer_r)
-    let c0 = sphere_cell_point(x1, y1, outer_r)
-    let d0 = sphere_cell_point(x0, y1, outer_r)
-    let a1 = sphere_cell_point(x0, y0, inner_r)
-    let b1 = sphere_cell_point(x1, y0, inner_r)
-    let c1 = sphere_cell_point(x1, y1, inner_r)
-    let d1 = sphere_cell_point(x0, y1, inner_r)
+    let roof_center = sphere_cell_point(cx, cy, inner_r)
     let base = wall_color(cell)
-    draw_quad3(a1, b1, c1, d1, cam, right, up, forward, screen_w, screen_h, focal, base)
-    draw_quad3(a0, b0, b1, a1, cam, right, up, forward, screen_w, screen_h, focal, base * 0.62)
-    draw_quad3(b0, c0, c1, b1, cam, right, up, forward, screen_w, screen_h, focal, base * 0.50)
-    draw_quad3(c0, d0, d1, c1, cam, right, up, forward, screen_w, screen_h, focal, base * 0.44)
-    draw_quad3(d0, a0, a1, d1, cam, right, up, forward, screen_w, screen_h, focal, base * 0.56)
-    for(5) floor:
-        let t = float(floor + 1) / 6.0
-        let ab0 = a0 + (a1 - a0) * t
-        let bb0 = b0 + (b1 - b0) * t
-        let cb0 = c0 + (c1 - c0) * t
-        let db0 = d0 + (d1 - d0) * t
-        draw_line3(ab0, bb0, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.85, 0.95, 1.0, 0.34 }, 1.0)
-        draw_line3(bb0, cb0, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.85, 0.95, 1.0, 0.28 }, 1.0)
-        draw_line3(cb0, db0, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.85, 0.95, 1.0, 0.22 }, 1.0)
-    draw_line3(a1, b1, cam, right, up, forward, screen_w, screen_h, focal, float4 { 1.0, 1.0, 1.0, 0.55 }, 1.0)
-    draw_line3(b1, c1, cam, right, up, forward, screen_w, screen_h, focal, float4 { 1.0, 1.0, 1.0, 0.55 }, 1.0)
-    draw_line3(c1, d1, cam, right, up, forward, screen_w, screen_h, focal, float4 { 1.0, 1.0, 1.0, 0.55 }, 1.0)
-    draw_line3(d1, a1, cam, right, up, forward, screen_w, screen_h, focal, float4 { 1.0, 1.0, 1.0, 0.55 }, 1.0)
+    for(16) seg:
+        let a0 = float(seg) / 16.0 * 360.0
+        let a1 = float(seg + 1) / 16.0 * 360.0
+        let x0 = cx + cos(a0) * footprint
+        let y0 = cy + sin(a0) * footprint
+        let x1 = cx + cos(a1) * footprint
+        let y1 = cy + sin(a1) * footprint
+        let p0 = sphere_cell_point(x0, y0, outer_r)
+        let p1 = sphere_cell_point(x1, y1, outer_r)
+        let q0 = sphere_cell_point(x0, y0, inner_r)
+        let q1 = sphere_cell_point(x1, y1, inner_r)
+        let shade = 0.48 + abs(cos(a0)) * 0.28
+        draw_quad3(p0, p1, q1, q0, cam, right, up, forward, screen_w, screen_h, focal, base * shade)
+        draw_tri3(roof_center, q0, q1, cam, right, up, forward, screen_w, screen_h, focal, base * 0.95)
+        draw_line3(q0, q1, cam, right, up, forward, screen_w, screen_h, focal, float4 { 1.0, 1.0, 1.0, 0.35 }, 1.0)
+        for(4) floor:
+            let t = float(floor + 1) / 5.0
+            let r = outer_r + (inner_r - outer_r) * t
+            let f0 = sphere_cell_point(x0, y0, r)
+            let f1 = sphere_cell_point(x1, y1, r)
+            draw_line3(f0, f1, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.85, 0.95, 1.0, 0.24 }, 1.0)
 
 def draw_surface_parcel(mx:int, my:int, occupied:int, cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float):
     let inset = 0.04
@@ -210,8 +228,6 @@ def draw_surface_parcel(mx:int, my:int, occupied:int, cam:float3, right:float3, 
         let mid_da = (d + a) * 0.5
         draw_line3(mid_ab, mid_cd, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.95, 0.88, 0.45, 0.22 }, 1.0)
         draw_line3(mid_bc, mid_da, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.95, 0.88, 0.45, 0.16 }, 1.0)
-    else:
-        draw_quad3(a, b, c, d, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.045, 0.055, 0.06, 1.0 })
 
 def draw_player_capsule(feet:float3, inward_up:float3, flat_forward:float3, cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float):
     let bottom3 = feet + inward_up * player_radius_m
