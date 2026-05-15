@@ -1,11 +1,16 @@
 // pseudo3d.lobster - inside-sphere traversal prototype
 // A software-projected 3D view of a player walking on the inner surface of a sphere.
 
-let sphere_r = 72.0
-let player_height = 2.0
-let player_radius = 0.42
-let camera_back = 7.0
-let camera_up = 2.7
+// World scale: one Lobster unit is treated as one meter.
+let meters_per_unit = 1.0
+let sphere_r = 180.0
+let player_height_m = 1.8
+let player_radius_m = 0.35
+let player_eye_m = 1.58
+let camera_back_m = 7.0
+let camera_up_m = 2.4
+let walk_speed_mps = 5.2
+let road_width_m = 8.0
 
 let worldmap = [
     [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -39,11 +44,11 @@ def wall_color(n:int) -> float4:
 
 def building_height(n:int) -> float:
     return switch n:
-        case 2: 7.0
-        case 3: 14.0
-        case 4: 22.0
-        case 5: 10.0
-        default: 9.0
+        case 2: 12.0
+        case 3: 28.0
+        case 4: 46.0
+        case 5: 18.0
+        default: 16.0
 
 def wrap_degrees(a:float) -> float:
     var r = a
@@ -161,20 +166,20 @@ def draw_building(mx:int, my:int, cell:int, cam:float3, right:float3, up:float3,
     draw_line3(d1, a1, cam, right, up, forward, screen_w, screen_h, focal, float4 { 1.0, 1.0, 1.0, 0.55 }, 1.0)
 
 def draw_player_capsule(feet:float3, inward_up:float3, flat_forward:float3, cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float):
-    let bottom3 = feet + inward_up * player_radius
-    let top3 = feet + inward_up * (player_height - player_radius)
-    let mid3 = feet + inward_up * (player_height * 0.5)
+    let bottom3 = feet + inward_up * player_radius_m
+    let top3 = feet + inward_up * (player_height_m - player_radius_m)
+    let mid3 = feet + inward_up * (player_height_m * 0.5)
     let b = screen_point(bottom3, cam, right, up, forward, screen_w, screen_h, focal)
     let t = screen_point(top3, cam, right, up, forward, screen_w, screen_h, focal)
     let m = screen_point(mid3, cam, right, up, forward, screen_w, screen_h, focal)
     if b.z > 0.05 and t.z > 0.05 and m.z > 0.05:
-        let sr = max(player_radius / m.z * focal, 6.0)
+        let sr = max(player_radius_m / m.z * focal, 6.0)
         let bottom = float2 { b.x, b.y }
         let top = float2 { t.x, t.y }
         draw_screen_capsule(bottom, top, sr, float4 { 0.16, 0.72, 1.0, 0.96 })
         draw_screen_capsule(bottom + float2 { sr * 0.18, -sr * 0.08 }, top + float2 { sr * 0.18, -sr * 0.08 }, sr * 0.58, float4 { 0.55, 0.92, 1.0, 0.38 })
         draw_line3(mid3, mid3 + flat_forward * 1.2, cam, right, up, forward, screen_w, screen_h, focal, float4 { 1.0, 0.95, 0.25, 1.0 }, 3.0)
-    draw_screen_circle3(feet, player_radius * 1.45, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.1, 0.95, 0.6, 0.28 }, 24)
+    draw_screen_circle3(feet, player_radius_m * 1.45, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.1, 0.95, 0.6, 0.28 }, 24)
 
 var lon = 0.0
 var lat = -8.0
@@ -197,7 +202,7 @@ while gl.frame() and gl.button("escape") != 1:
     if gl.button("q") >= 1: fov = max(fov - dt * 36.0, 35.0)
     if gl.button("e") >= 1: fov = min(fov + dt * 36.0, 115.0)
 
-    let angular_speed = 4.0 * dt
+    let angular_speed = degrees(walk_speed_mps / sphere_r) * dt
     var move_f = 0.0
     var move_r = 0.0
     if gl.button("w") >= 1 or gl.button("up") >= 1: move_f += angular_speed
@@ -215,9 +220,9 @@ while gl.frame() and gl.button("escape") != 1:
     let east = normalize(float3 { -sin(lon), 0.0, cos(lon) })
     let north = normalize(float3 { -sin(lat) * cos(lon), cos(lat), -sin(lat) * sin(lon) })
     let flat_forward = normalize(north * cos(yaw) + east * sin(yaw))
-    let cam = feet - flat_forward * camera_back + up0 * camera_up
+    let cam = feet - flat_forward * camera_back_m + up0 * camera_up_m
     let right = normalize(cross(flat_forward, up0))
-    let target = feet + up0 * (player_height * 1.1) + flat_forward * 8.0 + up0 * sin(pitch) * 3.0
+    let target = feet + up0 * player_eye_m + flat_forward * 8.0 + up0 * sin(pitch) * 3.0
     let forward = normalize(target - cam)
     let view_up = normalize(cross(right, forward))
     let focal = screen_h * 0.5 / tan(fov * 0.5)
@@ -267,5 +272,5 @@ while gl.frame() and gl.button("escape") != 1:
     gl.translate(float2 { 0.0, 22.0 })
     gl.text("WASD traverse shell, mouse yaw/pitch")
     gl.translate(float2 { 0.0, 22.0 })
-    gl.text("Q/E FOV " + string(fov) + "  lat " + string(lat))
+    gl.text("Q/E FOV " + string(fov) + "  R=" + string(sphere_r) + "m")
     gl.pop_model_view()
