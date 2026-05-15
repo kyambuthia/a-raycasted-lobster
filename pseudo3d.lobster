@@ -229,6 +229,54 @@ def draw_surface_parcel(mx:int, my:int, occupied:int, cam:float3, right:float3, 
         draw_line3(mid_ab, mid_cd, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.95, 0.88, 0.45, 0.22 }, 1.0)
         draw_line3(mid_bc, mid_da, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.95, 0.88, 0.45, 0.16 }, 1.0)
 
+def draw_shell_surface(cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float):
+    let r = sphere_r - 0.22
+    for(12) band:
+        let y0 = float(band) / 12.0 * float(map_h)
+        let y1 = float(band + 1) / 12.0 * float(map_h)
+        let shade = 0.055 + float(band) * 0.0025
+        for(48) seg:
+            let x0 = float(seg) / 48.0 * float(map_w)
+            let x1 = float(seg + 1) / 48.0 * float(map_w)
+            let a = sphere_cell_point(x0, y0, r)
+            let b = sphere_cell_point(x1, y0, r)
+            let c = sphere_cell_point(x1, y1, r)
+            let d = sphere_cell_point(x0, y1, r)
+            draw_quad3(a, b, c, d, cam, right, up, forward, screen_w, screen_h, focal, float4 { shade, shade + 0.018, shade + 0.024, 1.0 })
+
+def draw_lat_road(gy:float, width:float, cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float):
+    let r = sphere_r - 0.42
+    for(64) seg:
+        let x0 = float(seg) / 64.0 * float(map_w)
+        let x1 = float(seg + 1) / 64.0 * float(map_w)
+        let a = sphere_cell_point(x0, gy - width, r)
+        let b = sphere_cell_point(x1, gy - width, r)
+        let c = sphere_cell_point(x1, gy + width, r)
+        let d = sphere_cell_point(x0, gy + width, r)
+        draw_quad3(a, b, c, d, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.11, 0.12, 0.12, 1.0 })
+        if seg == 0 or seg == 16 or seg == 32 or seg == 48:
+            draw_line3((a + d) * 0.5, (b + c) * 0.5, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.9, 0.82, 0.45, 0.45 }, 1.0)
+
+def draw_lon_road(gx:float, width:float, cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float):
+    let r = sphere_r - 0.43
+    for(48) seg:
+        let y0 = float(seg) / 48.0 * float(map_h)
+        let y1 = float(seg + 1) / 48.0 * float(map_h)
+        let a = sphere_cell_point(gx - width, y0, r)
+        let b = sphere_cell_point(gx + width, y0, r)
+        let c = sphere_cell_point(gx + width, y1, r)
+        let d = sphere_cell_point(gx - width, y1, r)
+        draw_quad3(a, b, c, d, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.10, 0.11, 0.115, 1.0 })
+
+def draw_road_network(cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float):
+    let road_w = road_width_m / sphere_r * float(map_w) / 360.0 * 180.0
+    draw_lat_road(4.0, road_w, cam, right, up, forward, screen_w, screen_h, focal)
+    draw_lat_road(8.0, road_w * 1.15, cam, right, up, forward, screen_w, screen_h, focal)
+    draw_lat_road(11.5, road_w, cam, right, up, forward, screen_w, screen_h, focal)
+    draw_lon_road(3.5, road_w, cam, right, up, forward, screen_w, screen_h, focal)
+    draw_lon_road(8.0, road_w * 1.2, cam, right, up, forward, screen_w, screen_h, focal)
+    draw_lon_road(11.5, road_w, cam, right, up, forward, screen_w, screen_h, focal)
+
 def draw_player_capsule(feet:float3, inward_up:float3, flat_forward:float3, cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float):
     let bottom3 = feet + inward_up * player_radius_m
     let top3 = feet + inward_up * (player_height_m - player_radius_m)
@@ -292,29 +340,13 @@ while gl.frame() and gl.button("escape") != 1:
 
     gl.clear(float4 { 0.025, 0.03, 0.045, 1.0 })
 
-    // Interior sphere latitude rings.
-    for(13) yi:
-        let gy = float(yi + 1)
-        var prev = sphere_cell_point(0.0, gy, sphere_r)
-        for(64) xi:
-            let p = sphere_cell_point(float(xi + 1) / 64.0 * float(map_w), gy, sphere_r)
-            draw_line3(prev, p, cam, right, view_up, forward, screen_w, screen_h, focal, float4 { 0.18, 0.42, 0.52, 0.42 }, 1.0)
-            prev = p
+    draw_shell_surface(cam, right, view_up, forward, screen_w, screen_h, focal)
+    draw_road_network(cam, right, view_up, forward, screen_w, screen_h, focal)
 
-    // Interior sphere longitude arcs.
-    for(16) xi:
-        let gx = float(xi)
-        var prev = sphere_cell_point(gx, 0.0, sphere_r)
-        for(40) yi:
-            let p = sphere_cell_point(gx, float(yi + 1) / 40.0 * float(map_h), sphere_r)
-            draw_line3(prev, p, cam, right, view_up, forward, screen_w, screen_h, focal, float4 { 0.16, 0.32, 0.44, 0.36 }, 1.0)
-            prev = p
-
-    // Spherical surface parcels and city blocks.
+    // City structures remain driven by parcel data until the procedural city phase.
     for(map_w) mx:
         for(map_h) my:
             let cell = city_parcel(mx, my)
-            draw_surface_parcel(mx, my, cell, cam, right, view_up, forward, screen_w, screen_h, focal)
             if cell != 0:
                 draw_building(mx, my, cell, cam, right, view_up, forward, screen_w, screen_h, focal)
 
@@ -332,7 +364,7 @@ while gl.frame() and gl.button("escape") != 1:
     gl.rect(float2 { 390.0, 76.0 })
     gl.color(float4 { 0.92, 0.96, 0.9, 1.0 })
     gl.translate(float2 { 10.0, 8.0 })
-    gl.text("third-person capsule scale test")
+    gl.text("continuous shell sphere pass")
     gl.translate(float2 { 0.0, 22.0 })
     gl.text("WASD traverse shell, mouse yaw/pitch")
     gl.translate(float2 { 0.0, 22.0 })
