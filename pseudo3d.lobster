@@ -12,27 +12,18 @@ let camera_up_m = 2.4
 let walk_speed_mps = 5.2
 let road_width_m = 8.0
 
-let worldmap = [
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,2,2,2,0,0,0,0,3,0,3,0,0,0],
-    [0,0,0,2,0,0,0,0,0,0,3,0,3,0,0,0],
-    [0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,4,4,4,4,0,0,0,0,0],
-    [0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,5,0,5,0,5,0,0,0,0],
-    [0,0,0,0,0,0,0,5,0,0,0,5,0,0,0,0],
-    [0,0,0,0,0,0,0,5,5,0,5,5,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-]
-
 let map_w = 16
 let map_h = 16
+
+def city_parcel(mx:int, my:int) -> int:
+    if my == 3 and mx >= 3 and mx <= 5: return 2
+    if my >= 4 and my <= 5 and mx == 3: return 2
+    if my >= 3 and my <= 4 and (mx == 10 or mx == 12): return 3
+    if my == 7 and mx >= 7 and mx <= 10: return 4
+    if my == 8 and mx == 7: return 4
+    if my >= 10 and my <= 12 and (mx == 7 or mx == 11): return 5
+    if my == 12 and (mx == 8 or mx == 10): return 5
+    return 0
 
 def wall_color(n:int) -> float4:
     return switch n:
@@ -89,7 +80,7 @@ def map_y_from_lat(lat:float) -> int:
     return clamp(int((1.0 - sin(lat)) * float(map_h) * 0.5), 0, map_h - 1)
 
 def sphere_cell_at(lon:float, lat:float) -> int:
-    return worldmap[map_y_from_lat(lat)][map_x_from_lon(lon)]
+    return city_parcel(map_x_from_lon(lon), map_y_from_lat(lat))
 
 def can_stand_at(lon:float, lat:float) -> bool:
     if lat < -80.0 or lat > 80.0: return false
@@ -306,7 +297,7 @@ while gl.frame() and gl.button("escape") != 1:
     // Spherical surface parcels and city blocks.
     for(map_w) mx:
         for(map_h) my:
-            let cell = worldmap[my][mx]
+            let cell = city_parcel(mx, my)
             draw_surface_parcel(mx, my, cell, cam, right, view_up, forward, screen_w, screen_h, focal)
             if cell != 0:
                 draw_building(mx, my, cell, cam, right, view_up, forward, screen_w, screen_h, focal)
