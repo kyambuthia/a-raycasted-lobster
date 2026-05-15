@@ -82,6 +82,19 @@ def tangent_north(lon:float, lat:float) -> float3:
 def tangent_forward(lon:float, lat:float, yaw:float) -> float3:
     return normalize(tangent_north(lon, lat) * cos(yaw) + tangent_east(lon) * sin(yaw))
 
+def map_x_from_lon(lon:float) -> int:
+    return int(wrap_degrees(lon) / 360.0 * float(map_w))
+
+def map_y_from_lat(lat:float) -> int:
+    return clamp(int((1.0 - sin(lat)) * float(map_h) * 0.5), 0, map_h - 1)
+
+def sphere_cell_at(lon:float, lat:float) -> int:
+    return worldmap[map_y_from_lat(lat)][map_x_from_lon(lon)]
+
+def can_stand_at(lon:float, lat:float) -> bool:
+    if lat < -80.0 or lat > 80.0: return false
+    return sphere_cell_at(lon, lat) == 0
+
 def draw_line3(a:float3, b:float3, cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float, col:float4, thickness:float):
     let ar = a - cam
     let br = b - cam
@@ -255,8 +268,10 @@ while gl.frame() and gl.button("escape") != 1:
     if gl.button("a") >= 1: move_r -= angular_speed
 
     let lat_scale = max(cos(lat), 0.18)
-    lat = clamp(lat + cos(yaw) * move_f + cos(yaw + 90.0) * move_r, -80.0, 80.0)
-    lon = wrap_degrees(lon + (sin(yaw) * move_f + sin(yaw + 90.0) * move_r) / lat_scale)
+    let next_lat = clamp(lat + cos(yaw) * move_f + cos(yaw + 90.0) * move_r, -80.0, 80.0)
+    let next_lon = wrap_degrees(lon + (sin(yaw) * move_f + sin(yaw + 90.0) * move_r) / lat_scale)
+    if can_stand_at(next_lon, lat): lon = next_lon
+    if can_stand_at(lon, next_lat): lat = next_lat
 
     let feet = sphere_point(lon, lat, sphere_r - 0.12)
     let up0 = tangent_inward_up(lon, lat)
