@@ -234,7 +234,7 @@ def draw_shell_surface(cam:float3, right:float3, up:float3, forward:float3, scre
     for(12) band:
         let y0 = float(band) / 12.0 * float(map_h)
         let y1 = float(band + 1) / 12.0 * float(map_h)
-        let shade = 0.055 + float(band) * 0.0025
+        let shade = 0.025 + float(band) * 0.0015
         for(48) seg:
             let x0 = float(seg) / 48.0 * float(map_w)
             let x1 = float(seg + 1) / 48.0 * float(map_w)
@@ -242,7 +242,25 @@ def draw_shell_surface(cam:float3, right:float3, up:float3, forward:float3, scre
             let b = sphere_cell_point(x1, y0, r)
             let c = sphere_cell_point(x1, y1, r)
             let d = sphere_cell_point(x0, y1, r)
-            draw_quad3(a, b, c, d, cam, right, up, forward, screen_w, screen_h, focal, float4 { shade, shade + 0.018, shade + 0.024, 1.0 })
+            draw_quad3(a, b, c, d, cam, right, up, forward, screen_w, screen_h, focal, float4 { shade, shade + 0.006, shade + 0.012, 1.0 })
+
+def draw_shell_wireframe(cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float):
+    let r = sphere_r - 0.30
+    for(17) yi:
+        let gy = float(yi)
+        var prev = sphere_cell_point(0.0, gy, r)
+        for(96) xi:
+            let p = sphere_cell_point(float(xi + 1) / 96.0 * float(map_w), gy, r)
+            draw_line3(prev, p, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.20, 0.72, 0.86, 0.78 }, 1.0)
+            prev = p
+
+    for(32) xi:
+        let gx = float(xi) / 32.0 * float(map_w)
+        var prev = sphere_cell_point(gx, 0.0, r)
+        for(72) yi:
+            let p = sphere_cell_point(gx, float(yi + 1) / 72.0 * float(map_h), r)
+            draw_line3(prev, p, cam, right, up, forward, screen_w, screen_h, focal, float4 { 0.16, 0.48, 0.68, 0.68 }, 1.0)
+            prev = p
 
 def draw_lat_road(gy:float, width:float, cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float):
     let r = sphere_r - 0.42
@@ -295,7 +313,8 @@ def draw_player_capsule(feet:float3, inward_up:float3, flat_forward:float3, cam:
 
 var lon = 0.0
 var lat = -8.0
-var yaw = 92.0
+var view_yaw = 92.0
+var body_yaw = 92.0
 var pitch = -8.0
 var fov = 68.0
 
@@ -309,7 +328,7 @@ while gl.frame() and gl.button("escape") != 1:
     let dt = gl.delta_time()
     let mouse = gl.mouse_delta(0)
 
-    yaw = wrap_degrees(yaw + float(mouse.x) * 0.16)
+    view_yaw = wrap_degrees(view_yaw + float(mouse.x) * 0.16)
     pitch = clamp(pitch - float(mouse.y) * 0.16, -78.0, 78.0)
     if gl.button("q") >= 1: fov = max(fov - dt * 36.0, 35.0)
     if gl.button("e") >= 1: fov = min(fov + dt * 36.0, 115.0)
@@ -323,17 +342,22 @@ while gl.frame() and gl.button("escape") != 1:
     if gl.button("a") >= 1: move_r -= angular_speed
 
     let lat_scale = max(cos(lat), 0.18)
-    let next_lat = clamp(lat + cos(yaw) * move_f + cos(yaw + 90.0) * move_r, -80.0, 80.0)
-    let next_lon = wrap_degrees(lon + (sin(yaw) * move_f + sin(yaw + 90.0) * move_r) / lat_scale)
+    let move_lat = cos(view_yaw) * move_f + cos(view_yaw + 90.0) * move_r
+    let move_lon = sin(view_yaw) * move_f + sin(view_yaw + 90.0) * move_r
+    if abs(move_lat) + abs(move_lon) > 0.0001:
+        body_yaw = wrap_degrees(atan2(float2 { move_lon, move_lat }))
+    let next_lat = clamp(lat + move_lat, -80.0, 80.0)
+    let next_lon = wrap_degrees(lon + move_lon / lat_scale)
     if can_stand_at(next_lon, lat): lon = next_lon
     if can_stand_at(lon, next_lat): lat = next_lat
 
     let feet = sphere_point(lon, lat, sphere_r - 0.12)
     let up0 = tangent_inward_up(lon, lat)
-    let flat_forward = tangent_forward(lon, lat, yaw)
-    let cam = feet - flat_forward * camera_back_m + up0 * camera_up_m
-    let right = normalize(cross(flat_forward, up0))
-    let target = feet + up0 * player_eye_m + flat_forward * 8.0 + up0 * sin(pitch) * 3.0
+    let view_forward = tangent_forward(lon, lat, view_yaw)
+    let body_forward = tangent_forward(lon, lat, body_yaw)
+    let cam = feet - view_forward * camera_back_m + up0 * camera_up_m
+    let right = normalize(cross(view_forward, up0))
+    let target = feet + up0 * player_eye_m + view_forward * 8.0 + up0 * sin(pitch) * 3.0
     let forward = normalize(target - cam)
     let view_up = normalize(cross(right, forward))
     let focal = screen_h * 0.5 / tan(fov * 0.5)
@@ -341,6 +365,7 @@ while gl.frame() and gl.button("escape") != 1:
     gl.clear(float4 { 0.025, 0.03, 0.045, 1.0 })
 
     draw_shell_surface(cam, right, view_up, forward, screen_w, screen_h, focal)
+    draw_shell_wireframe(cam, right, view_up, forward, screen_w, screen_h, focal)
     draw_road_network(cam, right, view_up, forward, screen_w, screen_h, focal)
 
     // City structures remain driven by parcel data until the procedural city phase.
@@ -350,7 +375,7 @@ while gl.frame() and gl.button("escape") != 1:
             if cell != 0:
                 draw_building(mx, my, cell, cam, right, view_up, forward, screen_w, screen_h, focal)
 
-    draw_player_capsule(feet, up0, flat_forward, cam, right, view_up, forward, screen_w, screen_h, focal)
+    draw_player_capsule(feet, up0, body_forward, cam, right, view_up, forward, screen_w, screen_h, focal)
 
     // Center reticle and HUD.
     gl.color(float4 { 0.9, 0.96, 0.9, 0.7 })
@@ -364,7 +389,7 @@ while gl.frame() and gl.button("escape") != 1:
     gl.rect(float2 { 390.0, 76.0 })
     gl.color(float4 { 0.92, 0.96, 0.9, 1.0 })
     gl.translate(float2 { 10.0, 8.0 })
-    gl.text("continuous shell sphere pass")
+    gl.text("wireframe world sphere")
     gl.translate(float2 { 0.0, 22.0 })
     gl.text("WASD traverse shell, mouse yaw/pitch")
     gl.translate(float2 { 0.0, 22.0 })
