@@ -60,9 +60,13 @@ def sphere_point(lon:float, lat:float, radius:float) -> float3:
     let clat = cos(lat)
     return float3 { radius * clat * cos(lon), radius * sin(lat), radius * clat * sin(lon) }
 
+def equal_area_lat(my:float) -> float:
+    let v = clamp(1.0 - 2.0 * my / float(map_h), -0.99, 0.99)
+    return asin(v)
+
 def sphere_cell_point(mx:float, my:float, radius:float) -> float3:
     let lon = mx / float(map_w) * 360.0
-    let lat = 82.0 - my / float(map_h) * 164.0
+    let lat = equal_area_lat(my)
     return sphere_point(lon, lat, radius)
 
 def draw_line3(a:float3, b:float3, cam:float3, right:float3, up:float3, forward:float3, screen_w:float, screen_h:float, focal:float, col:float4, thickness:float):
