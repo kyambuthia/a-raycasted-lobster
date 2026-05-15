@@ -1,0 +1,678 @@
+FUNCTION: __top_level_expression() -> void
+    (block
+      struct vec2:void
+      struct vec3:void
+      struct vec4:void
+      specialization float2:void
+      specialization int2:void
+      specialization float3:void
+      specialization int3:void
+      specialization float4:void
+      specialization int4:void
+      enumbool:void
+      (worldmap var
+        (vector_constructor
+          (vector_constructor
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int):[int]
+          (vector_constructor
+            1:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            1:int):[int]
+          (vector_constructor
+            1:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            1:int):[int]
+          (vector_constructor
+            1:int
+            0:int
+            0:int
+            2:int
+            2:int
+            2:int
+            0:int
+            0:int
+            0:int
+            0:int
+            3:int
+            0:int
+            3:int
+            0:int
+            0:int
+            1:int):[int]
+          (vector_constructor
+            1:int
+            0:int
+            0:int
+            2:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            3:int
+            0:int
+            3:int
+            0:int
+            0:int
+            1:int):[int]
+          (vector_constructor
+            1:int
+            0:int
+            0:int
+            2:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            1:int):[int]
+          (vector_constructor
+            1:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            1:int):[int]
+          (vector_constructor
+            1:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            4:int
+            4:int
+            4:int
+            4:int
+            0:int
+            0:int
+            0:int
+            0:int
+            1:int):[int]
+          (vector_constructor
+            1:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            4:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            1:int):[int]
+          (vector_constructor
+            1:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            1:int):[int]
+          (vector_constructor
+            1:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            5:int
+            0:int
+            5:int
+            0:int
+            5:int
+            0:int
+            0:int
+            0:int
+            1:int):[int]
+          (vector_constructor
+            1:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            5:int
+            0:int
+            0:int
+            0:int
+            5:int
+            0:int
+            0:int
+            0:int
+            1:int):[int]
+          (vector_constructor
+            1:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            5:int
+            5:int
+            0:int
+            5:int
+            5:int
+            0:int
+            0:int
+            0:int
+            1:int):[int]
+          (vector_constructor
+            1:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            1:int):[int]
+          (vector_constructor
+            1:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            0:int
+            1:int):[int]
+          (vector_constructor
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int
+            1:int):[int]):[[int]]):void
+      (map_w var 16:int):void
+      (map_h var 16:int):void
+      (def wall_color):void
+      (pos var (object_constructor 8.0:float 7.0:float):float2):void
+      (dir var (object_constructor 1.0:float 0.0:float):float2):void
+      (plane var (object_constructor 0.0:float 0.66:float):float2):void
+      (render_width var 320:int):void
+      (move_speed var 4.0:float):void
+      (mouse_sens var 0.2:float):void
+      (gl.window "Pseudo 3D Raycaster MVP":string 960:int 600:int 0:int 1:int):void
+      (gl.cursor false:bool):void
+      (return
+        (while
+          (and gl.frame:bool (!= (gl.button "escape":string):int 1:int):bool):bool
+          (block
+            (screen_w var (float (.x gl.window_size:int2):int):float):void
+            (screen_h var (float (.y gl.window_size:int2):int):float):void
+            (dt var gl.delta_time:float):void
+            (mouse_rot var
+              (* (float (.x (gl.mouse_delta 0:int):int2):int):float 0.2:float):float):void
+            (if
+              (!= mouse_rot:float 0.0:float):bool
+              (block
+                (cos_r var (cos mouse_rot:float):float):void
+                (sin_r var (sin mouse_rot:float):float):void
+                (old_dir_x var (.x dir:float2):float):void
+                (=
+                  (.x dir:float2):float
+                  (-
+                    (* (.x dir:float2):float cos_r:float):float
+                    (* (.y dir:float2):float sin_r:float):float):float):void
+                (=
+                  (.y dir:float2):float
+                  (+
+                    (* old_dir_x:float sin_r:float):float
+                    (* (.y dir:float2):float cos_r:float):float):float):void
+                (old_plane_x var (.x plane:float2):float):void
+                (=
+                  (.x plane:float2):float
+                  (-
+                    (* (.x plane:float2):float cos_r:float):float
+                    (* (.y plane:float2):float sin_r:float):float):float):void
+                (=
+                  (.y plane:float2):float
+                  (+
+                    (* old_plane_x:float sin_r:float):float
+                    (* (.y plane:float2):float cos_r:float):float):float):void):void):void
+            (if
+              (or
+                (>= (gl.button "w":string):int 1:int):bool
+                (>= (gl.button "up":string):int 1:int):bool):bool
+              (block
+                (new_x var
+                  (+
+                    (.x pos:float2):float
+                    (* (* (.x dir:float2):float dt:float):float 4.0:float):float):float):void
+                (new_y var
+                  (+
+                    (.y pos:float2):float
+                    (* (* (.y dir:float2):float dt:float):float 4.0:float):float):float):void
+                (if
+                  (==
+                    (indexing operation
+                      (indexing operation worldmap:[[int]] (int (.y pos:float2):float):int):[int]
+                      (int new_x:float):int):int
+                    0:int):bool
+                  (block (= (.x pos:float2):float new_x:float):void):void):void
+                (if
+                  (==
+                    (indexing operation
+                      (indexing operation worldmap:[[int]] (int new_y:float):int):[int]
+                      (int (.x pos:float2):float):int):int
+                    0:int):bool
+                  (block (= (.y pos:float2):float new_y:float):void):void):void):void):void
+            (if
+              (or
+                (>= (gl.button "s":string):int 1:int):bool
+                (>= (gl.button "down":string):int 1:int):bool):bool
+              (block
+                (new_x var
+                  (-
+                    (.x pos:float2):float
+                    (* (* (.x dir:float2):float dt:float):float 4.0:float):float):float):void
+                (new_y var
+                  (-
+                    (.y pos:float2):float
+                    (* (* (.y dir:float2):float dt:float):float 4.0:float):float):float):void
+                (if
+                  (==
+                    (indexing operation
+                      (indexing operation worldmap:[[int]] (int (.y pos:float2):float):int):[int]
+                      (int new_x:float):int):int
+                    0:int):bool
+                  (block (= (.x pos:float2):float new_x:float):void):void):void
+                (if
+                  (==
+                    (indexing operation
+                      (indexing operation worldmap:[[int]] (int new_y:float):int):[int]
+                      (int (.x pos:float2):float):int):int
+                    0:int):bool
+                  (block (= (.y pos:float2):float new_y:float):void):void):void):void):void
+            (if
+              (>= (gl.button "a":string):int 1:int):bool
+              (block
+                (new_x var
+                  (-
+                    (.x pos:float2):float
+                    (* (* (.x plane:float2):float dt:float):float 4.0:float):float):float):void
+                (new_y var
+                  (-
+                    (.y pos:float2):float
+                    (* (* (.y plane:float2):float dt:float):float 4.0:float):float):float):void
+                (if
+                  (==
+                    (indexing operation
+                      (indexing operation worldmap:[[int]] (int (.y pos:float2):float):int):[int]
+                      (int new_x:float):int):int
+                    0:int):bool
+                  (block (= (.x pos:float2):float new_x:float):void):void):void
+                (if
+                  (==
+                    (indexing operation
+                      (indexing operation worldmap:[[int]] (int new_y:float):int):[int]
+                      (int (.x pos:float2):float):int):int
+                    0:int):bool
+                  (block (= (.y pos:float2):float new_y:float):void):void):void):void):void
+            (if
+              (>= (gl.button "d":string):int 1:int):bool
+              (block
+                (new_x var
+                  (+
+                    (.x pos:float2):float
+                    (* (* (.x plane:float2):float dt:float):float 4.0:float):float):float):void
+                (new_y var
+                  (+
+                    (.y pos:float2):float
+                    (* (* (.y plane:float2):float dt:float):float 4.0:float):float):float):void
+                (if
+                  (==
+                    (indexing operation
+                      (indexing operation worldmap:[[int]] (int (.y pos:float2):float):int):[int]
+                      (int new_x:float):int):int
+                    0:int):bool
+                  (block (= (.x pos:float2):float new_x:float):void):void):void
+                (if
+                  (==
+                    (indexing operation
+                      (indexing operation worldmap:[[int]] (int new_y:float):int):[int]
+                      (int (.x pos:float2):float):int):int
+                    0:int):bool
+                  (block (= (.y pos:float2):float new_y:float):void):void):void):void):void
+            (gl.clear
+              (object_constructor 0.3:float 0.3:float 0.6:float 1.0:float):float4):void
+            gl.push_model_view:void
+            (gl.translate
+              (object_constructor 0.0:float (* screen_h:float 0.5:float):float):float2):void
+            (gl.color
+              (object_constructor 0.15:float 0.15:float 0.15:float 1.0:float):float4):void
+            (gl.rect
+              (object_constructor screen_w:float (* screen_h:float 0.5:float):float):float2
+              0:int):void
+            gl.pop_model_view:void
+            (strip_w var (/ screen_w:float 320.0:float):float):void
+            (for
+              320:int
+              (block
+                (x var for loop element:int):void
+                (camera_x var
+                  (-
+                    (/ (* 2.0:float (float x:int):float):float 320.0:float):float
+                    1.0:float):float):void
+                (ray_x var
+                  (+
+                    (.x dir:float2):float
+                    (* (.x plane:float2):float camera_x:float):float):float):void
+                (ray_y var
+                  (+
+                    (.y dir:float2):float
+                    (* (.y plane:float2):float camera_x:float):float):float):void
+                (map_x var (int (.x pos:float2):float):int):void
+                (map_y var (int (.y pos:float2):float):int):void
+                (delta_x var 999999.0:float):void
+                (delta_y var 999999.0:float):void
+                (if
+                  (!= ray_x:float 0.0:float):bool
+                  (block
+                    (= delta_x:float (abs (/ 1.0:float ray_x:float):float):float):void):void):void
+                (if
+                  (!= ray_y:float 0.0:float):bool
+                  (block
+                    (= delta_y:float (abs (/ 1.0:float ray_y:float):float):float):void):void):void
+                (step_x var 0:int):void
+                (side_x var 0.0:float):void
+                (if
+                  (< ray_x:float 0.0:float):bool
+                  (block
+                    (= step_x:int -1:int):void
+                    (=
+                      side_x:float
+                      (*
+                        (- (.x pos:float2):float (float map_x:int):float):float
+                        delta_x:float):float):void):void
+                  (block
+                    (= step_x:int 1:int):void
+                    (=
+                      side_x:float
+                      (*
+                        (-
+                          (+ (float map_x:int):float 1.0:float):float
+                          (.x pos:float2):float):float
+                        delta_x:float):float):void):void):void
+                (step_y var 0:int):void
+                (side_y var 0.0:float):void
+                (if
+                  (< ray_y:float 0.0:float):bool
+                  (block
+                    (= step_y:int -1:int):void
+                    (=
+                      side_y:float
+                      (*
+                        (- (.y pos:float2):float (float map_y:int):float):float
+                        delta_y:float):float):void):void
+                  (block
+                    (= step_y:int 1:int):void
+                    (=
+                      side_y:float
+                      (*
+                        (-
+                          (+ (float map_y:int):float 1.0:float):float
+                          (.y pos:float2):float):float
+                        delta_y:float):float):void):void):void
+                (hit var 0:int):void
+                (side var 0:int):void
+                (while
+                  (== hit:int 0:int):bool
+                  (block
+                    (if
+                      (< side_x:float side_y:float):bool
+                      (block
+                        (+= side_x:float delta_x:float):void
+                        (+= map_x:int step_x:int):void
+                        (= side:int 0:int):void):void
+                      (block
+                        (+= side_y:float delta_y:float):void
+                        (+= map_y:int step_y:int):void
+                        (= side:int 1:int):void):void):void
+                    (if
+                      (and
+                        (and
+                          (and (>= map_x:int 0:int):bool (< map_x:int 16:int):bool):bool
+                          (>= map_y:int 0:int):bool):bool
+                        (< map_y:int 16:int):bool):bool
+                      (block
+                        (=
+                          hit:int
+                          (indexing operation
+                            (indexing operation worldmap:[[int]] map_y:int):[int]
+                            map_x:int):int):void):void
+                      (block (= hit:int 1:int):void):void):void):void):void
+                (perp var 1.0:float):void
+                (if
+                  (== side:int 0:int):bool
+                  (block
+                    (=
+                      perp:float
+                      (/
+                        (+
+                          (- (float map_x:int):float (.x pos:float2):float):float
+                          (* (- 1.0:float (float step_x:int):float):float 0.5:float):float):float
+                        ray_x:float):float):void):void
+                  (block
+                    (=
+                      perp:float
+                      (/
+                        (+
+                          (- (float map_y:int):float (.y pos:float2):float):float
+                          (* (- 1.0:float (float step_y:int):float):float 0.5:float):float):float
+                        ray_y:float):float):void):void):void
+                (if
+                  (< perp:float 0.01:float):bool
+                  (block (= perp:float 0.01:float):void):void):void
+                (line_h var (/ screen_h:float perp:float):float):void
+                (draw_start var (* (- screen_h:float line_h:float):float 0.5:float):float):void
+                (col var
+                  (block
+                    (n var hit:int):void
+                    (switch
+                      n:int
+                      (list
+                        (case
+                          (list 1:int):void
+                          (block
+                            (object_constructor 0.8:float 0.2:float 0.2:float 1.0:float):float4):float4):float4
+                        (case
+                          (list 2:int):void
+                          (block
+                            (object_constructor 0.2:float 0.8:float 0.2:float 1.0:float):float4):float4):float4
+                        (case
+                          (list 3:int):void
+                          (block
+                            (object_constructor 0.2:float 0.3:float 0.8:float 1.0:float):float4):float4):float4
+                        (case
+                          (list 4:int):void
+                          (block
+                            (object_constructor 0.8:float 0.8:float 0.2:float 1.0:float):float4):float4):float4
+                        (case
+                          (list 5:int):void
+                          (block
+                            (object_constructor 0.8:float 0.2:float 0.8:float 1.0:float):float4):float4):float4
+                        (case
+                          list:void
+                          (block
+                            (object_constructor 0.5:float 0.5:float 0.5:float 1.0:float):float4):float4):float4):void):float4):float4):void
+                (if
+                  (== side:int 1:int):bool
+                  (block (= col:float4 (* col:float4 0.6:float):float4):void):void):void
+                (fog var
+                  (max
+                    (- 1.0:float (* perp:float 0.04:float):float):float
+                    0.25:float):float):void
+                (=
+                  col:float4
+                  (object_constructor
+                    (* (.x col:float4):float fog:float):float
+                    (* (.y col:float4):float fog:float):float
+                    (* (.z col:float4):float fog:float):float
+                    1.0:float):float4):void
+                gl.push_model_view:void
+                (gl.translate
+                  (object_constructor (* (float x:int):float strip_w:float):float draw_start:float):float2):void
+                (gl.color col:float4):void
+                (gl.rect
+                  (object_constructor (+ strip_w:float 1.0:float):float line_h:float):float2
+                  0:int):void
+                gl.pop_model_view:void):void):void
+            (mm_scale var 8.0:float):void
+            (mm_x var 10.0:float):void
+            (mm_y var (- (- screen_h:float 128.0:float):float 10.0:float):float):void
+            (mm_w var 128.0:float):void
+            (mm_h var 128.0:float):void
+            gl.push_model_view:void
+            (gl.translate (object_constructor 10.0:float mm_y:float):float2):void
+            (gl.color
+              (object_constructor 0.0:float 0.0:float 0.0:float 0.6:float):float4):void
+            (gl.rect (object_constructor mm_w:float mm_h:float):float2 0:int):void
+            (for
+              16:int
+              (block
+                (mx var for loop element:int):void
+                (for
+                  16:int
+                  (block
+                    (my var for loop element:int):void
+                    (if
+                      (!=
+                        (indexing operation (indexing operation worldmap:[[int]] my:int):[int] mx:int):int
+                        0:int):bool
+                      (block
+                        gl.push_model_view:void
+                        (gl.translate
+                          (object_constructor
+                            (* (float mx:int):float 8.0:float):float
+                            (* (float my:int):float 8.0:float):float):float2):void
+                        (gl.color
+                          (object_constructor 1.0:float 1.0:float 1.0:float 0.6:float):float4):void
+                        (gl.rect (object_constructor 8.0:float 8.0:float):float2 0:int):void
+                        gl.pop_model_view:void):void):void):void):void):void):void
+            gl.push_model_view:void
+            (gl.translate
+              (object_constructor
+                (* (.x pos:float2):float 8.0:float):float
+                (* (.y pos:float2):float 8.0:float):float):float2):void
+            (gl.color
+              (object_constructor 0.0:float 1.0:float 0.0:float 1.0:float):float4):void
+            (gl.circle 3.0:float 8:int):void
+            gl.pop_model_view:void
+            gl.push_model_view:void
+            (gl.translate
+              (object_constructor
+                (* (.x pos:float2):float 8.0:float):float
+                (* (.y pos:float2):float 8.0:float):float):float2):void
+            (gl.color
+              (object_constructor 1.0:float 1.0:float 0.0:float 0.8:float):float4):void
+            (gl.line
+              (object_constructor 0.0:float 0.0:float):float2
+              (object_constructor
+                (* (.x dir:float2):float 12.0:float):float
+                (* (.y dir:float2):float 12.0:float):float):float2
+              2.0:float):void
+            gl.pop_model_view:void
+            gl.pop_model_view:void):void):void):void)
+
